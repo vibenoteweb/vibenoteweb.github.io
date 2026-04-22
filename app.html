@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vibenote</title>
+  
+  <style>
+    /* --- THE SLEEK DARK MODE --- */
+    body {
+      background-color: #0f0f11; 
+      color: #333;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      display: flex; 
+      height: 100vh; 
+    }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #0f0f11; }
+    ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a778e5; }
+
+    /* --- THE SIDEBAR --- */
+    #sidebar {
+      background-color: #1a1a1c;
+      width: 260px;
+      padding: 20px;
+      border-right: 1px solid #333;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      box-shadow: 2px 0px 10px rgba(0,0,0,0.5); 
+      z-index: 10;
+    }
+    
+    #new-btn {
+      background-color: #a778e5; 
+      color: #333;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 20px;
+      transition: 0.2s; 
+    }
+    #new-btn:hover { background-color: #8b5cf6; transform: scale(1.02); }
+
+    .folder {
+      font-weight: bold;
+      color: #a778e5; 
+      margin-top: 15px;
+      margin-bottom: 5px;
+      font-size: 18px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .file-tab {
+      background-color: transparent;
+      color: #a0a0a0;
+      border: none;
+      padding: 8px 10px 8px 20px; 
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: 0.2s;
+      font-size: 15px;
+      margin-bottom: 2px;
+    }
+    .file-tab:hover { background-color: #2a2a2d; color: white; }
+    .active-file { background-color: #2a2a2d; color: #a778e5; font-weight: bold; border-left: 4px solid #a778e5; }
+
+    /* --- THE MAIN SCREEN --- */
+    #main-area {
+      flex-grow: 1; 
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    #top-bar {
+      background-color: #1a1a1c;
+      padding: 15px 25px;
+      display: flex;
+      gap: 15px; 
+      border-bottom: 1px solid #333;
+    }
+
+    .action-btn {
+      background-color: #2a2a2d;
+      color: white;
+      border: 1px solid #444;
+      padding: 8px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+    .action-btn:hover { background-color: #444; }
+
+    #media-btn { border-color: #e91e63; color: #ff80ab; }
+    #media-btn:hover { background-color: #e91e63; color: white; }
+    
+    #upload-btn { border-color: #00bcd4; color: #84ffff; }
+    #upload-btn:hover { background-color: #00bcd4; color: black; }
+
+    #workspace {
+      display: flex;
+      flex-grow: 1;
+      padding: 25px;
+      gap: 25px;
+    }
+
+    textarea, #preview-box {
+      flex: 1;
+      background-color: #0f0f11;
+      color: #e0e0e0;
+      border: none;
+      border-radius: 8px;
+      font-size: 17px;
+      line-height: 1.6;
+      outline: none;
+      resize: none;
+      overflow-y: auto;
+    }
+
+    #preview-box { 
+      display: none; 
+      background-color: #151517; 
+      padding: 20px;
+      border: 1px solid #333;
+    }
+
+    img, video {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-top: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
+      display: block;
+    }
+
+    /* --- CUSTOM MODALS --- */
+    .modal-overlay {
+      display: none; 
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0, 0, 0, 0.7); 
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(3px); 
+    }
+
+    .modal-box {
+      background-color: #1a1a1c;
+      padding: 25px;
+      border-radius: 12px;
+      border: 1px solid #444;
+      width: 350px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      box-shadow: 0px 10px 30px rgba(0,0,0,0.8);
+    }
+
+    .modal-box h3 { margin: 0; color: white; font-weight: normal; }
+    
+    .modal-box input {
+      background-color: #0f0f11;
+      color: white;
+      border: 1px solid #444;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 16px;
+      outline: none;
+    }
+    .modal-box input:focus { border-color: #a778e5; }
+
+    .modal-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="sidebar">
+    <h2 style="color: white; margin-bottom: 5px;">Vibenote</h2>
+    <button id="new-btn" onclick="openNoteModal()">New Note</button>
+    <div id="file-list"></div>
+  </div>
+
+  <div id="main-area">
+    <div id="top-bar">
+      <button class="action-btn" onclick="toggleMarkdown()">Toggle Preview</button>
+      <button class="action-btn" id="media-btn" onclick="openMediaModal()">Add Link</button>
+      <button class="action-btn" id="upload-btn" onclick="triggerUpload()">Upload File</button>
+      <button class="action-btn" onclick="exportNote()">Export Note</button>
+    </div>
+
+    <div id="workspace">
+      <input type="file" id="file-uploader" accept="image/*, video/*" style="display: none;" onchange="handleFileUpload(event)">
+      <textarea id="my-editor" placeholder="Type here..." oninput="autoSave()"></textarea>
+      <div id="preview-box"></div>
+    </div>
+
+    <div id="note-modal" class="modal-overlay">
+      <div class="modal-box">
+        <h3>Create New Note</h3>
+        <input type="text" id="folder-input" placeholder="Folder Name">
+        <input type="text" id="note-input" placeholder="Note Name">
+        <div class="modal-buttons">
+          <button class="action-btn" style="background: #444;" onclick="closeModal('note-modal')">Cancel</button>
+          <button class="action-btn" style="background: #a778e5; border-color: #a778e5;" onclick="submitNewNote()">Create</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="media-modal" class="modal-overlay">
+      <div class="modal-box">
+        <h3>Add Media Link</h3>
+        <input type="text" id="url-input" placeholder="Paste URL here...">
+        <div class="modal-buttons">
+          <button class="action-btn" style="background: #444;" onclick="closeModal('media-modal')">Cancel</button>
+          <button class="action-btn" style="background: #e91e63; border-color: #e91e63;" onclick="submitMedia()">Add Link</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let myVault = { 
+      'Example Folder': {
+        'example': 'Example'
+      }
+    };
+    let currentFolder = 'General';
+    let currentNote = 'Welcome Note';
+    let isPreviewing = false;
+
+    window.onload = function() {
+      let savedVault = localStorage.getItem("proVaultClean");
+      if (savedVault !== null) {
+        myVault = JSON.parse(savedVault);
+        currentFolder = Object.keys(myVault)[0]; 
+        currentNote = Object.keys(myVault[currentFolder])[0];
+      }
+      renderSidebar(); 
+      switchNote(currentFolder, currentNote);
+    };
+
+    function renderSidebar() {
+      let listArea = document.getElementById("file-list");
+      listArea.innerHTML = ""; 
+      for (let folder in myVault) {
+        listArea.innerHTML += "<div class='folder'>" + folder + "</div>";
+        for (let note in myVault[folder]) {
+          let safeId = "tab-" + note.replace(/\s/g, '-'); 
+          listArea.innerHTML += "<button class='file-tab' id='" + safeId + "' onclick='switchNote(\"" + folder + "\", \"" + note + "\")'>" + note + "</button>";
+        }
+      }
+    }
+
+    function switchNote(folderName, noteName) {
+      currentFolder = folderName;
+      currentNote = noteName; 
+      document.getElementById("my-editor").value = myVault[folderName][noteName];
+
+      let allTabs = document.getElementsByClassName("file-tab");
+      for (let i = 0; i < allTabs.length; i++) {
+        allTabs[i].className = "file-tab";
+      }
+      let safeId = "tab-" + noteName.replace(/\s/g, '-');
+      let activeBtn = document.getElementById(safeId);
+      if (activeBtn) activeBtn.className = "file-tab active-file"; 
+      
+      if(isPreviewing) updatePreview();
+    }
+
+    function autoSave() {
+      myVault[currentFolder][currentNote] = document.getElementById("my-editor").value;
+      localStorage.setItem("proVaultClean", JSON.stringify(myVault));
+      if(isPreviewing) updatePreview();
+    }
+
+    function openNoteModal() {
+      document.getElementById('folder-input').value = ""; 
+      document.getElementById('note-input').value = "";
+      document.getElementById('note-modal').style.display = "flex";
+    }
+
+    function openMediaModal() {
+      document.getElementById('url-input').value = "";
+      document.getElementById('media-modal').style.display = "flex";
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = "none";
+    }
+
+    function submitNewNote() {
+      let folderName = document.getElementById('folder-input').value.trim();
+      let noteName = document.getElementById('note-input').value.trim();
+
+      if (folderName === "" || noteName === "") return;
+
+      if (!myVault[folderName]) {
+          myVault[folderName] = {}; 
+      }
+      myVault[folderName][noteName] = ""; 
+      
+      closeModal('note-modal');
+      renderSidebar();       
+      switchNote(folderName, noteName);   
+      autoSave();  
+    }
+
+    function submitMedia() {
+      let url = document.getElementById('url-input').value.trim();
+      if (url !== "") {
+        let editor = document.getElementById("my-editor");
+        editor.value += "\n![](" + url + ")\n";
+        autoSave(); 
+      }
+      closeModal('media-modal');
+    }
+
+    function triggerUpload() { document.getElementById("file-uploader").click(); }
+
+    function handleFileUpload(event) {
+      let myFile = event.target.files[0];
+      if (!myFile) return; 
+      
+      let temporaryLocalUrl = URL.createObjectURL(myFile);
+      let editor = document.getElementById("my-editor");
+      editor.value += "\n![](" + temporaryLocalUrl + ")\n";
+      
+      autoSave();
+      event.target.value = "";
+    }
+
+    function toggleMarkdown() {
+      isPreviewing = !isPreviewing; 
+      let editor = document.getElementById("my-editor");
+      let preview = document.getElementById("preview-box");
+
+      if (isPreviewing) {
+        editor.style.display = "none";   
+        preview.style.display = "block";  
+        updatePreview();
+      } else {
+        editor.style.display = "block";   
+        preview.style.display = "none";   
+      }
+    }
+
+    function updatePreview() {
+      let text = document.getElementById("my-editor").value;
+      
+      text = text.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+      text = text.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+      text = text.replace(/\*\*(.*)\*\*/gim, '<b>$1</b>');
+      text = text.replace(/\*(.*)\*/gim, '<i>$1</i>');
+      
+      text = text.replace(/!\[([^\]]*)\]\((.*?)\)/gim, function(match, altText, linkUrl) {
+        if (linkUrl.endsWith('.mp4') || linkUrl.endsWith('.webm')) {
+          return '<video src="' + linkUrl + '" controls></video>';
+        } else {
+          return '<img src="' + linkUrl + '" alt="Media">';
+        }
+      });
+
+      text = text.replace(/\n/gim, '<br>');
+      document.getElementById("preview-box").innerHTML = text;
+    }
+
+    function exportNote() {
+      let textToSave = document.getElementById("my-editor").value;
+      let myBlob = new Blob([textToSave], { type: "text/markdown" });
+      let fakeLink = document.createElement("a");
+      fakeLink.download = currentNote + ".md"; 
+      fakeLink.href = window.URL.createObjectURL(myBlob);
+      fakeLink.click();
+    }
+  </script>
+
+</body>
+</html>
